@@ -1,6 +1,4 @@
-
-import flatpickr from "flatpickr";
-
+ import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 
 const options = {
@@ -8,35 +6,56 @@ const options = {
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
-    onClose(selectedDates) {                            
+  onClose(selectedDates) { 
+    if (selectedDates[0].getTime() - Date.now() <= 0) {
+      window.alert("Please choose a date in the future")
+      startBtn.setAttribute("disabled", '');
+  } else {
+    startBtn.removeAttribute("disabled");
+  }
   },
 };
 
 const input = document.querySelector("#datetime-picker");
 const fp = flatpickr(input, options);
+
+const startBtn = document.querySelector("[data-start]")
 const spanDays = document.querySelector("[data-days]");
 const spanHours = document.querySelector("[data-hours]");
 const spanMinutes = document.querySelector("[data-minutes]");
 const spanSeconds = document.querySelector("[data-seconds]");
 
 input.addEventListener("input", onInput);
+startBtn.addEventListener("click", onBtnClick);
 
-function onInput(event) {
-    const selectedTime = new Date(`${event.currentTarget.value}`)
-    const selectetimeInMs = selectedTime.getTime();    
+startBtn.setAttribute("disabled", '');
+
+let selectetimeInMs = '';
+let timerId = null;
+
+function onInput(event) {   
+  const selectedTime = new Date(`${event.currentTarget.value}`)
+  selectetimeInMs = selectedTime.getTime();
+}
+
+function onBtnClick() {
+  startBtn.setAttribute("disabled", '');
+
+  timerId = setInterval(() => {
+    const currentTime = Date.now();        
+    const clock = selectetimeInMs - currentTime; 
+    const { days, hours, minutes, seconds } = convertMs(clock);
+    console.log(`${days}:${hours}:${minutes}:${seconds}`);
     
-    setInterval(() => {
-        const currentTime = Date.now();        
-        const clock = selectetimeInMs - currentTime; 
-        const { days, hours, minutes, seconds } = convertMs(clock);
-        console.log(`${days}:${hours}:${minutes}:${seconds}`);
-        
-        spanDays.textContent = `${days}`;
-        spanHours.textContent = `${hours}`;
-        spanMinutes.textContent = `${minutes}`;
-        spanSeconds.textContent = `${seconds}`;
-        
-    }, 1000);   
+    spanDays.textContent = `${days}`;
+    spanHours.textContent = `${hours}`;
+    spanMinutes.textContent = `${minutes}`;
+    spanSeconds.textContent = `${seconds}`;
+    
+     if (clock < 1000)  {
+      clearInterval(timerId);
+    }
+  }, 1000); 
 }
 
 function addLeadingZero(value) {
